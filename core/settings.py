@@ -78,6 +78,8 @@ USE_TZ        = True
 # ── Archivos estáticos ────────────────────────────────────────────────────
 STATIC_URL  = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# STATICFILES_DIRS ≠ STATIC_ROOT (error frecuente)
+STATICFILES_DIRS = [BASE_DIR / 'static']  # fuentes adicionales
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ── Archivos media ────────────────────────────────────────────────────────
