@@ -49,3 +49,7 @@ y repositorio en GitHub con al menos 10 commits.
 - URL pública en Render → HTTP 200 (W03)
 - Repositorio con rama main + historial de commits
 - Ficha Schmelkes E1 completa (W03)
+
+## Avance W02
+- Repositorio Git inicializado y conectado a GitHub
+- Historial sincronizado con origin/main
