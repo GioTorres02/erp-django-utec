@@ -18,3 +18,5 @@ Sistema ERP en Django con las apps: clientes, core, productos, proveedores, repo
 
 Al terminar, ejecutar finalizar\_sesion.bat
 
+ 
+ 

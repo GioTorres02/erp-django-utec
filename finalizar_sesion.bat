@@ -5,6 +5,8 @@ COLOR 0E
 :: --- 1. RUTAS ---
 SET PC_WORK=C:\Temp_Workspace_ERP
 SET USB_PATH=%~dp0
+SET PATH=%USB_PATH%Git_Portable\cmd;%USB_PATH%Git_Portable\ucrt64\bin;%PATH%
+git config --global --add safe.directory *
 
 echo ==================================================
 echo  ERP DJANGO :: PC ^-^> USB (RESPALDO)
