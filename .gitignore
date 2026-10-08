@@ -24,3 +24,15 @@ media/
 # Sistema operativo
 Thumbs.db
 .DS_Store
+
+# Herramientas portables e instaladores
+Git_Portable/
+Python_Portable/
+git_respaldo_hoy/
+WorkSpace_ERP/
+*.7z.exe
+*.zip
+
+# Windows
+System Volume Information/
+$RECYCLE.BIN/
