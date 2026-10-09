@@ -7,9 +7,9 @@
 | **Número de espiral** | 1 |
 | **Nombre del ciclo** | Infraestructura y Configuración Base |
 | **Semanas** | W01 – W03 |
-| **Fecha de inicio** | ___/___/_____ |
-| **Fecha de cierre** | ___/___/_____ |
-| **Responsable** | [Nombre del estudiante] |
+| **Fecha de inicio** | 02_/10/2026|
+| **Fecha de cierre** | 09/10/2026|
+| **Responsable** | [Josef Giovanny Moya Torres] |
 | **Asesor** | MC. Román Fernando López González |
 
 ---
@@ -55,6 +55,10 @@ posterior tenga una URL pública verificable desde el inicio del proyecto.
 4967690 Prueba de flujo USB
 a52cb60 Quitar instalador PortableGit del repositorio
 c9715bd Actualizar .gitignore y quitar herramientas portables y WorkSpace_ERP del indice
+280aa94 Sprint 0 CIERRE [M1]: fichas Schmelkes + retrospectiva + evidencias
+c53947a Sprint 0 CIERRE [M1]: Render.com desplegado + tests OK + Ficha Schmelkes E1
+a6d773e Fix: DEBUG = False con formato estandar
+3885278 Sprint 0 W03: settings_prod + Procfile + Dockerfile + render.yaml
 8847098 Sprint 0 W03: <descripcion del trabajo>
 32a79fd Sprint 0 W02: estado actual del proyecto
 03f6b28 Sprint 0 W02: actualizacion del proyecto
@@ -78,16 +82,18 @@ c9715bd Actualizar .gitignore y quitar herramientas portables y WorkSpace_ERP de
 
 | Problema | Causa | Solución aplicada |
 |---|---|---|
-| | | |
-| | | |
-
+| Render proponía un plan de $7/mes | Plan de pago seleccionado por defecto | Cambiar a Free |
+| Start Command era gunicorn app:app | Valor genérico autocompletado | Reemplazar por gunicorn core.wsgi |
+| No existe la pestaña Shell | No está en el plan gratis | Crear superusuario con variables de entorno |
+| fichas/ no se subía a GitHub | Regla fichas/ en .gitignore | Quitar la regla y usar git add -f |
+| Falló test de DEBUG | Espacios extra en DEBUG = False | Dejar un solo espacio |
 ---
 
 ## 6. Lecciones aprendidas
 
-1.
-2.
-3.
+1. Los valores autocompletados de una plataforma (plan, comandos de inicio, runtime) se deben revisar uno por uno antes de desplegar.
+2. Los tests de configuración detectan errores de formato antes de llegar a producción.
+3. Hay que revisar `git status` y `.gitignore` antes de cada commit para no dejar archivos sin subir.
 
 ---
 
