@@ -2,7 +2,7 @@
 ## Semanas W04–W06 · Espiral 2: Modelado de Datos y ORM
 
 **Fecha de planeación:** 14/10/2026
-**Responsable:** [josef giovanny moya torres]
+**Responsable:** [Tu nombre]
 
 **Sprint Goal:**
 Al finalizar el Sprint 1, el ERP tendrá un esquema de base de datos
