@@ -35,7 +35,6 @@ class DjangoVersionTest(TestCase):
             "Django debe ser 4.2 LTS o 5.2 LTS"
         )
 
-
 class VistasBienvenidaTest(TestCase):
     """Verifica que las vistas de bienvenida respondan correctamente."""
 
