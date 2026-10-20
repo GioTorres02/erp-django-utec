@@ -103,3 +103,13 @@ cobertura de pruebas ≥ 15 tests de modelo.
 > ⚠️ **La W05 no puede iniciar sin la aprobación registrada aquí.**
 > Cuando el asesor apruebe, escribir en Observaciones: `Aprobado ✅`
 > (el arranque de W05 lo verifica con `findstr /i "Aprobado"`).
+
+[ ] Fechas de inicio y cierre correctas
+[ ] Tabla de tareas: todos en ✅ con tiempos reales
+[ ] Evidencias: URL de Render, resultado de showmigrations, resultado de tests
+[ ] git log --oneline -5 pegado en el campo de evidencias
+[ ] Criterios de aceptación: todos marcados ✅
+[ ] Al menos 1 problema encontrado documentado con su solución
+[ ] 3 lecciones aprendidas redactadas
+[ ] Tiempo total invertido calculado (W04 + W05 + W06)
+[ ] Campo "Aprobación formal" con fecha y observaciones del asesor
