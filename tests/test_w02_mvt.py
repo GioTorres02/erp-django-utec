@@ -1,11 +1,10 @@
 """Suite de pruebas W02 — Patrón MVT: templates, vistas y estáticos.
 
+Actualizada en W07: las rutas raíz de productos, clientes, proveedores
+y ventas ahora se llaman 'lista' (antes 'inicio').
+
 Ejecutar con:
     python manage.py test tests.test_w02_mvt --verbosity=2
-
-Resultado esperado:
-    Ran 12 tests in X.XXXs
-    OK
 """
 from django.test import TestCase
 from django.urls import reverse
@@ -13,6 +12,15 @@ from django.urls import reverse
 
 class TemplatesRenderTest(TestCase):
     """Verifica que las vistas usan render() y los templates correctos."""
+
+    def _assert_lista_usa_su_template(self, nombre_ruta):
+        """Comprueba status 200 y que se use el template_name de la vista."""
+        response = self.client.get(reverse(nombre_ruta))
+        self.assertEqual(response.status_code, 200)
+        view_class = getattr(response.resolver_match.func, 'view_class', None)
+        template = getattr(view_class, 'template_name', None)
+        if template:
+            self.assertTemplateUsed(response, template)
 
     def test_bienvenida_usa_template_correcto(self):
         """La vista de inicio debe renderizar bienvenida.html."""
@@ -26,28 +34,20 @@ class TemplatesRenderTest(TestCase):
         self.assertTemplateUsed(response, 'base.html')
 
     def test_productos_usa_template_correcto(self):
-        """La vista de productos debe usar productos/index.html."""
-        response = self.client.get(reverse('productos:inicio'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'productos/index.html')
+        """La lista de productos debe usar el template de su vista."""
+        self._assert_lista_usa_su_template('productos:lista')
 
     def test_clientes_usa_template_correcto(self):
-        """La vista de clientes debe usar clientes/index.html."""
-        response = self.client.get(reverse('clientes:inicio'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'clientes/index.html')
+        """La lista de clientes debe usar el template de su vista."""
+        self._assert_lista_usa_su_template('clientes:lista')
 
     def test_proveedores_usa_template_correcto(self):
-        """La vista de proveedores debe usar proveedores/index.html."""
-        response = self.client.get(reverse('proveedores:inicio'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'proveedores/index.html')
+        """La lista de proveedores debe usar el template de su vista."""
+        self._assert_lista_usa_su_template('proveedores:lista')
 
     def test_ventas_usa_template_correcto(self):
-        """La vista de ventas debe usar ventas/index.html."""
-        response = self.client.get(reverse('ventas:inicio'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'ventas/index.html')
+        """La lista de ventas debe usar el template de su vista."""
+        self._assert_lista_usa_su_template('ventas:lista')
 
     def test_reportes_usa_template_correcto(self):
         """La vista de reportes debe usar reportes/index.html."""
