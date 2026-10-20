@@ -8,15 +8,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, True))
 environ.Env.read_env(BASE_DIR / '.env')
 
-SECRET_KEY  = env('SECRET_KEY', default='dev-key-insegura-solo-para-desarrollo')
-DEBUG       = env('DEBUG', default=True)
+SECRET_KEY    = env('SECRET_KEY', default='dev-key-insegura-solo-para-desarrollo')
+DEBUG         = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 # ── Apps instaladas ───────────────────────────────────────────────────────
-# core/settings.py — actualizar INSTALLED_APPS
 INSTALLED_APPS = [
     # Jazzmin PRIMERO — antes de django.contrib.admin
-    'jazzmin',                          # ← nueva línea, primera posición
+    'jazzmin',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -81,11 +80,19 @@ USE_I18N      = True
 USE_TZ        = True
 
 # ── Archivos estáticos ────────────────────────────────────────────────────
-STATIC_URL  = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL       = '/static/'
+STATIC_ROOT      = BASE_DIR / 'staticfiles'
 # STATICFILES_DIRS ≠ STATIC_ROOT (error frecuente)
 STATICFILES_DIRS = [BASE_DIR / 'static']  # fuentes adicionales
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # ── Archivos media ────────────────────────────────────────────────────────
 MEDIA_URL  = '/media/'
@@ -104,7 +111,6 @@ REST_FRAMEWORK = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# core/settings.py — agregar al final del archivo
 
 # ── JAZZMIN — Personalización del admin con Fable 5 AzulERP ───────────────
 JAZZMIN_SETTINGS = {
@@ -143,56 +149,56 @@ JAZZMIN_SETTINGS = {
 
     # Iconos de Font Awesome para cada modelo
     'icons': {
-        'auth':                       'fas fa-users-cog',
-        'auth.user':                  'fas fa-user',
-        'auth.Group':                 'fas fa-users',
-        'clientes.Cliente':           'fas fa-user-tie',
-        'proveedores.Proveedor':      'fas fa-truck',
-        'productos.Categoria':        'fas fa-tags',
-        'productos.Producto':         'fas fa-box',
-        'ventas.Venta':               'fas fa-file-invoice-dollar',
-        'ventas.DetalleVenta':        'fas fa-list',
-        'ventas.Pedido':              'fas fa-shopping-cart',
+        'auth':                           'fas fa-users-cog',
+        'auth.user':                      'fas fa-user',
+        'auth.Group':                     'fas fa-users',
+        'clientes.Cliente':               'fas fa-user-tie',
+        'proveedores.Proveedor':          'fas fa-truck',
+        'productos.Categoria':            'fas fa-tags',
+        'productos.Producto':             'fas fa-box',
+        'ventas.Venta':                   'fas fa-file-invoice-dollar',
+        'ventas.DetalleVenta':            'fas fa-list',
+        'ventas.Pedido':                  'fas fa-shopping-cart',
         'configuracion.ConfiguracionERP': 'fas fa-cogs',
     },
-    'default_icon_parents': 'fas fa-folder',
+    'default_icon_parents':  'fas fa-folder',
     'default_icon_children': 'fas fa-circle',
 
     # Apariencia
-    'related_modal_active':     True,
-    'custom_css':               'erp_custom.css',   # archivo en static/
-    'show_sidebar':             True,
-    'navigation_expanded':      True,
-    'hide_apps':                [],
-    'hide_models':              [],
+    'related_modal_active':  True,
+    'custom_css':            'erp_custom.css',   # archivo en static/
+    'show_sidebar':          True,
+    'navigation_expanded':   True,
+    'hide_apps':             [],
+    'hide_models':           [],
 
     # UI tweaks
-    'changeform_format':        'horizontal_tabs',
-    'language_chooser':         False,
+    'changeform_format':     'horizontal_tabs',
+    'language_chooser':      False,
 }
 
 JAZZMIN_UI_TWEAKS = {
-    'navbar_small_text':        False,
-    'footer_small_text':        False,
-    'body_small_text':          False,
-    'brand_small_text':         False,
-    'brand_colour':             'navbar-dark',
-    'accent':                   'accent-navy',
-    'navbar':                   'navbar-dark',
-    'no_navbar_border':         False,
-    'navbar_fixed':             True,
-    'layout_boxed':             False,
-    'footer_fixed':             False,
-    'sidebar_fixed':            True,
-    'sidebar':                  'sidebar-dark-navy',
-    'sidebar_nav_small_text':   False,
-    'sidebar_disable_expand':   False,
-    'sidebar_nav_child_indent': True,
+    'navbar_small_text':         False,
+    'footer_small_text':         False,
+    'body_small_text':           False,
+    'brand_small_text':          False,
+    'brand_colour':              'navbar-dark',
+    'accent':                    'accent-navy',
+    'navbar':                    'navbar-dark',
+    'no_navbar_border':          False,
+    'navbar_fixed':              True,
+    'layout_boxed':              False,
+    'footer_fixed':              False,
+    'sidebar_fixed':             True,
+    'sidebar':                   'sidebar-dark-navy',
+    'sidebar_nav_small_text':    False,
+    'sidebar_disable_expand':    False,
+    'sidebar_nav_child_indent':  True,
     'sidebar_nav_compact_style': False,
-    'sidebar_nav_legacy_style': False,
-    'sidebar_nav_flat_style':   False,
-    'theme':                    'default',
-    'dark_mode_theme':          None,
+    'sidebar_nav_legacy_style':  False,
+    'sidebar_nav_flat_style':    False,
+    'theme':                     'default',
+    'default_theme_mode':        'auto',   # 'auto', 'light' o 'dark'
     'button_classes': {
         'primary':   'btn-primary',
         'secondary': 'btn-secondary',

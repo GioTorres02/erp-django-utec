@@ -1,4 +1,5 @@
 ﻿env_erp/
+erp_env/
 venv/
 __pycache__/
 *.pyc
