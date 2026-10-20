@@ -13,12 +13,11 @@ Decisiones de diseño aplicadas:
     D-06: DetalleVenta.precio_unitario → almacenado (histórico).
 """
 from decimal import Decimal
-
 from django.db import models
-
-from clientes.models  import Cliente
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from clientes.models import Cliente
 from productos.models import Producto
-
 
 # ── Venta ─────────────────────────────────────────────────────────────────
 
@@ -73,19 +72,20 @@ class DetalleVenta(models.Model):
     puede cambiar después de la venta; se necesita el histórico exacto.
     """
 
-    venta           = models.ForeignKey(
+    venta = models.ForeignKey(
         Venta,
         on_delete=models.CASCADE,      # borrar Venta → borrar sus líneas
         related_name='detalles',
         verbose_name='Venta'
     )
-    producto        = models.ForeignKey(
+    producto = models.ForeignKey(
         Producto,
         on_delete=models.PROTECT,      # D-05: no borrar producto con ventas
         related_name='detalles_venta',
         verbose_name='Producto'
     )
-    cantidad        = models.PositiveIntegerField(
+    cantidad = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
         verbose_name='Cantidad'
     )
     precio_unitario = models.DecimalField(
@@ -107,6 +107,17 @@ class DetalleVenta(models.Model):
         """Subtotal de la línea: cantidad × precio_unitario."""
         return self.precio_unitario * self.cantidad
 
+    def clean(self) -> None:
+        """Validación de negocio para línea de detalle.
+
+        Raises:
+            ValidationError: si cantidad < 1.
+        """
+        if self.cantidad is not None and self.cantidad < 1:
+            raise ValidationError(
+                {'cantidad': 'La cantidad debe ser al menos 1.'}
+            )
+
     def save(self, *args, **kwargs) -> None:
         """Captura el precio actual del producto si no se especificó.
 
@@ -116,7 +127,6 @@ class DetalleVenta(models.Model):
         if self.precio_unitario is None:
             self.precio_unitario = self.producto.precio
         super().save(*args, **kwargs)
-
 
 # ── Pedido ─────────────────────────────────────────────────────────────────
 
@@ -160,8 +170,11 @@ class Pedido(models.Model):
         null=True, blank=True, verbose_name='Fecha de entrega'
     )
     total_pagado  = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        null=True, blank=True,
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal('0.00'))],  # ← agregar
         verbose_name='Total pagado'
     )
 
@@ -172,3 +185,20 @@ class Pedido(models.Model):
 
     def __str__(self) -> str:
         return f"{self.numero_pedido} — {self.cliente} [{self.get_estado_display()}]"
+    
+# Agregar dentro de la clase Pedido:
+
+    def clean(self) -> None:
+        """Valida que la fecha de entrega no sea anterior al pedido.
+
+        Raises:
+            ValidationError: si fecha_entrega < fecha_pedido.date().
+        """
+        if (self.fecha_entrega and self.fecha_pedido and
+                self.fecha_entrega < self.fecha_pedido.date()):
+            raise ValidationError({
+                'fecha_entrega': (
+                    'La fecha de entrega no puede ser anterior '
+                    'a la fecha del pedido.'
+                )
+            })
