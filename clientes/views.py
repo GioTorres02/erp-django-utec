@@ -1,8 +1,8 @@
 # clientes/views.py
-"""Vistas de la app clientes — W07 (lectura) y W08 (escritura)."""
+"""Vistas de la app clientes: W07 (lectura), W08 (escritura) y W09 (permisos)."""
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import redirect_to_login
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView
@@ -83,14 +83,30 @@ class ClienteUpdateView(LoginRequiredMixin, UpdateView):
         return response
 
 
-# Actualizar ClienteDeleteView:
+# ── W09: Borrado con permiso ──────────────────────────────────────────────
+
 class ClienteDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    """Confirmación y borrado de un cliente.
+
+    Anónimo → login (302). Autenticado sin permiso → 403.
+    """
+
     model               = Cliente
     template_name       = 'clientes/eliminar.html'
     pk_url_kwarg        = 'cliente_id'
     success_url         = reverse_lazy('clientes:lista')
     permission_required = 'clientes.delete_cliente'
     raise_exception     = True
+
+    def handle_no_permission(self):
+        """Anónimo → login (302). Autenticado sin permiso → 403."""
+        if not self.request.user.is_authenticated:
+            return redirect_to_login(
+                self.request.get_full_path(),
+                self.get_login_url(),
+                self.get_redirect_field_name(),
+            )
+        return super().handle_no_permission()
 
     def form_valid(self, form):
         nombre   = self.object.nombre

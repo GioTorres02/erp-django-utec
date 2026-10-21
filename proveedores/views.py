@@ -1,7 +1,8 @@
 # proveedores/views.py
-"""Vistas de la app proveedores — W07 (lectura) y W08 (escritura)."""
+"""Vistas de la app proveedores: W07 (lectura), W08 (escritura) y W09 (permisos)."""
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.views import redirect_to_login
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView
@@ -84,13 +85,30 @@ class ProveedorUpdateView(LoginRequiredMixin, UpdateView):
         return response
 
 
-class ProveedorDeleteView(LoginRequiredMixin, DeleteView):
-    """Confirmación y borrado de un proveedor."""
+# ── W09: Borrado con permiso ──────────────────────────────────────────────
 
-    model         = Proveedor
-    template_name = 'proveedores/eliminar.html'
-    pk_url_kwarg  = 'proveedor_id'
-    success_url   = reverse_lazy('proveedores:lista')
+class ProveedorDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    """Confirmación y borrado de un proveedor.
+
+    Anónimo → login (302). Autenticado sin permiso → 403.
+    """
+
+    model               = Proveedor
+    template_name       = 'proveedores/eliminar.html'
+    pk_url_kwarg        = 'proveedor_id'
+    success_url         = reverse_lazy('proveedores:lista')
+    permission_required = 'proveedores.delete_proveedor'
+    raise_exception     = True
+
+    def handle_no_permission(self):
+        """Anónimo → login (302). Autenticado sin permiso → 403."""
+        if not self.request.user.is_authenticated:
+            return redirect_to_login(
+                self.request.get_full_path(),
+                self.get_login_url(),
+                self.get_redirect_field_name(),
+            )
+        return super().handle_no_permission()
 
     def form_valid(self, form):
         nombre   = self.object.nombre
