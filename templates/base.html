@@ -298,7 +298,20 @@
             padding: .8rem; border-top: 4px solid var(--clr-royal);
         }
 
+        /* ══════════ CALABAZAS AL TECLEAR ══════════ */
+        .calabaza-tecla {
+            position: fixed; z-index: 10000; pointer-events: none;
+            font-size: 1.6rem; line-height: 1;
+            animation: calabaza-sube 1s ease-out forwards;
+        }
+        @keyframes calabaza-sube {
+            0%   { opacity: 0; transform: translate(-50%, 0) scale(.4) rotate(0deg); }
+            15%  { opacity: 1; transform: translate(-50%, -10px) scale(1.2) rotate(-8deg); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -70px) scale(.9) rotate(var(--rot)); }
+        }
+
         @media (prefers-reduced-motion: reduce) {
+            .calabaza-tecla { display: none; }
             .leaf, .leaf-zone { display: none; }
             * { transition: none !important; }
         }
@@ -431,6 +444,38 @@
     }
     soltarHojas(document.getElementById('hojasIzq'),  1, 10);
     soltarHojas(document.getElementById('hojasDer'), -1, 10);
+})();
+</script>
+
+<!-- Una calabaza por cada tecla -->
+<script>
+(function () {
+    var ignoradas = ['Shift','Control','Alt','Meta','CapsLock','Tab','Escape'];
+    var reducido = window.matchMedia('(prefers-reduced-motion: reduce)');
+    document.addEventListener('keydown', function (e) {
+        if (reducido.matches || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (ignoradas.indexOf(e.key) !== -1) return;
+        if (document.querySelectorAll('.calabaza-tecla').length > 25) return;
+
+        var el = document.activeElement, x, y;
+        if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+            var r = el.getBoundingClientRect();      // sale justo encima del campo
+            x = r.left + 12 + Math.random() * Math.max(r.width - 24, 1);
+            y = r.top - 4;
+        } else {                                      // si no hay campo, aparece al azar
+            x = window.innerWidth * (0.1 + Math.random() * 0.8);
+            y = window.innerHeight * (0.65 + Math.random() * 0.25);
+        }
+        var c = document.createElement('span');
+        c.className = 'calabaza-tecla';
+        c.textContent = '🎃';
+        c.style.left = x + 'px';
+        c.style.top  = y + 'px';
+        c.style.setProperty('--dx',  ((Math.random() * 60) - 30).toFixed(0) + 'px');
+        c.style.setProperty('--rot', ((Math.random() * 60) - 30).toFixed(0) + 'deg');
+        c.addEventListener('animationend', function () { c.remove(); });
+        document.body.appendChild(c);
+    });
 })();
 </script>
 
