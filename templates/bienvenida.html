@@ -49,8 +49,31 @@
     }
     .modulo-desc { color: var(--clr-muted); font-size: .88rem; margin: .3rem 0 0; }
 
+    /* ── BRUJAS EN ESCOBA cruzando la pantalla ── */
+    .bruja {
+        position: fixed; left: 0; top: var(--y);
+        width: 120px; height: 70px; z-index: 2; pointer-events: none;
+        background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 70'><path d='M10 50 L108 44' stroke='%236B3F1D' stroke-width='4' stroke-linecap='round'/><path d='M26 49 L4 38 L7 51 L2 60 L12 56 L26 53Z' fill='%23E8731F' stroke='%23140C07' stroke-width='2' stroke-linejoin='round'/><path d='M66 36 L88 43' stroke='%23F8EBC4' stroke-width='5' stroke-linecap='round'/><path d='M66 36 L88 43' stroke='%23140C07' stroke-width='3' stroke-linecap='round'/><path d='M48 47 C48 34 60 28 68 33 L76 47Z' fill='%23140C07' stroke='%23F8EBC4' stroke-width='1.5' stroke-linejoin='round'/><circle cx='70' cy='24' r='6.5' fill='%23F5C99B' stroke='%23140C07' stroke-width='2'/><path d='M63 19 L76 2 L79 19Z' fill='%23140C07' stroke='%23F8EBC4' stroke-width='1.5' stroke-linejoin='round'/><ellipse cx='71' cy='19' rx='11' ry='3' fill='%23140C07' stroke='%23F8EBC4' stroke-width='1.5'/><path d='M64 16 L78 16' stroke='%23E8731F' stroke-width='2.5'/><path d='M62 46 L58 58 L64 58' fill='none' stroke='%23F8EBC4' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/><path d='M62 46 L58 58 L64 58' fill='none' stroke='%23140C07' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+        animation: var(--anim) var(--dur) linear var(--delay) infinite;
+    }
+    @keyframes bruja-der {
+        0%   { transform: translate(-180px, 0); }
+        25%  { transform: translate(calc(25vw - 45px), -22px) rotate(-3deg); }
+        50%  { transform: translate(calc(50vw - 90px), 10px) rotate(2deg); }
+        75%  { transform: translate(calc(75vw - 135px), -18px) rotate(-3deg); }
+        100% { transform: translate(calc(100vw + 60px), 0); }
+    }
+    @keyframes bruja-izq {
+        0%   { transform: translate(calc(100vw + 60px), 0) scaleX(-1); }
+        25%  { transform: translate(calc(75vw - 45px), -20px) scaleX(-1) rotate(-3deg); }
+        50%  { transform: translate(calc(50vw - 90px), 12px) scaleX(-1) rotate(2deg); }
+        75%  { transform: translate(calc(25vw - 135px), -16px) scaleX(-1) rotate(-3deg); }
+        100% { transform: translate(-180px, 0) scaleX(-1); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .col-md-4 .erp-card { transform: none !important; }
+        .bruja { display: none; }
     }
 </style>
 {% endblock %}
@@ -82,4 +105,43 @@
     </div>
     {% endfor %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Brujas en escoba: unas van hacia la derecha y otras hacia la izquierda
+    if (!reducido) {
+        var brujas = [
+            { y: '14vh', dur: 17, delay: 0,   anim: 'bruja-der' },
+            { y: '38vh', dur: 22, delay: -9,  anim: 'bruja-izq' },
+            { y: '62vh', dur: 19, delay: -4,  anim: 'bruja-der' }
+        ];
+        brujas.forEach(function (b) {
+            var el = document.createElement('div');
+            el.className = 'bruja';
+            el.setAttribute('aria-hidden', 'true');
+            el.style.setProperty('--y', b.y);
+            el.style.setProperty('--dur', b.dur + 's');
+            el.style.setProperty('--delay', b.delay + 's');
+            el.style.setProperty('--anim', b.anim);
+            document.body.appendChild(el);
+        });
+    }
+
+    // Al hacer clic en un módulo: salen calabazas volando y luego abre la página
+    document.querySelectorAll('.modulo-link').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            if (reducido || typeof window.lanzarCalabazas !== 'function') return;
+            if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+            e.preventDefault();
+            window.lanzarCalabazas(e.clientX, e.clientY, 10);
+            var destino = a.href;
+            setTimeout(function () { window.location.href = destino; }, 650);
+        });
+    });
+})();
+</script>
 {% endblock %}

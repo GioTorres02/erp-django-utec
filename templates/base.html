@@ -298,6 +298,19 @@
             padding: .8rem; border-top: 4px solid var(--clr-royal);
         }
 
+        /* ══════════ CALABAZAS VOLANDO AL HACER CLIC EN UNA CAJITA ══════════ */
+        .calabaza-vuela {
+            position: fixed; z-index: 10000; pointer-events: none;
+            line-height: 1;
+            animation: calabaza-vuela .95s cubic-bezier(.2,.7,.4,1) forwards;
+        }
+        @keyframes calabaza-vuela {
+            0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(0deg); }
+            12%  { opacity: 1; }
+            55%  { opacity: 1; transform: translate(calc(-50% + var(--dx) * .7), calc(-50% + var(--dy))) scale(1.1) rotate(calc(var(--rot) * .6)); }
+            100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 150px)) scale(.9) rotate(var(--rot)); }
+        }
+
         /* ══════════ CALABAZAS AL TECLEAR ══════════ */
         .calabaza-tecla {
             position: fixed; z-index: 10000; pointer-events: none;
@@ -311,7 +324,7 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .calabaza-tecla { display: none; }
+            .calabaza-tecla, .calabaza-vuela { display: none; }
             .leaf, .leaf-zone { display: none; }
             * { transition: none !important; }
         }
@@ -444,6 +457,40 @@
     }
     soltarHojas(document.getElementById('hojasIzq'),  1, 10);
     soltarHojas(document.getElementById('hojasDer'), -1, 10);
+})();
+</script>
+
+<!-- Calabazas que salen volando al hacer clic en una cajita (.erp-card) -->
+<script>
+(function () {
+    var reducido = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    // Disponible para cualquier plantilla: lanzarCalabazas(x, y, cantidad)
+    window.lanzarCalabazas = function (x, y, n) {
+        if (reducido.matches) return;
+        if (document.querySelectorAll('.calabaza-vuela').length > 40) return;
+        for (var i = 0; i < (n || 8); i++) {
+            var c = document.createElement('span');
+            c.className = 'calabaza-vuela';
+            c.textContent = '🎃';
+            c.style.left = x + 'px';
+            c.style.top  = y + 'px';
+            c.style.fontSize = (1.2 + Math.random() * 0.9).toFixed(2) + 'rem';
+            c.style.animationDelay = (Math.random() * 0.12).toFixed(2) + 's';
+            c.style.setProperty('--dx',  ((Math.random() * 2 - 1) * 150).toFixed(0) + 'px');
+            c.style.setProperty('--dy',  (-(60 + Math.random() * 120)).toFixed(0) + 'px');
+            c.style.setProperty('--rot', ((Math.random() * 2 - 1) * 200).toFixed(0) + 'deg');
+            c.addEventListener('animationend', function () { this.remove(); });
+            document.body.appendChild(c);
+        }
+    };
+
+    // Clic en el fondo de cualquier cajita (si no es enlace, botón ni campo)
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.erp-card')) return;
+        if (e.target.closest('a, button, input, select, textarea, label')) return;
+        window.lanzarCalabazas(e.clientX, e.clientY, 8);
+    });
 })();
 </script>
 
