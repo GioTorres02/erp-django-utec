@@ -298,6 +298,29 @@
             padding: .8rem; border-top: 4px solid var(--clr-royal);
         }
 
+        /* ══════════ BARRIO: casas con niños pidiendo dulces (fondo fijo) ══════════ */
+        :root { --ch: clamp(120px, 13vw, 180px); --foot: 52px; }
+        .barrio {
+            position: fixed; left: 0; right: 0; bottom: var(--foot);
+            height: var(--ch); overflow: hidden;
+            z-index: 0; pointer-events: none;
+        }
+        .barrio svg {
+            position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            height: var(--ch); width: calc(var(--ch) * 7.7778);
+        }
+        .ninio { animation: salta 1.8s ease-in-out infinite; }
+        @keyframes salta {
+            0%, 100% { transform: translateY(0); }
+            40%, 60% { transform: translateY(-5px); }
+        }
+        .burbuja { opacity: 0; animation: burbuja 9s ease-in-out infinite; }
+        @keyframes burbuja {
+            0%, 4%   { opacity: 0; }
+            10%, 34% { opacity: 1; }
+            40%, 100% { opacity: 0; }
+        }
+
         /* ══════════ CALABAZAS VOLANDO AL HACER CLIC EN UNA CAJITA ══════════ */
         .calabaza-vuela {
             position: fixed; z-index: 10000; pointer-events: none;
@@ -325,6 +348,8 @@
 
         @media (prefers-reduced-motion: reduce) {
             .calabaza-tecla, .calabaza-vuela { display: none; }
+            .ninio { animation: none; }
+            .burbuja { display: none; }
             .leaf, .leaf-zone { display: none; }
             * { transition: none !important; }
         }
@@ -366,6 +391,122 @@
         </symbol>
     </defs>
 </svg>
+
+<!-- Barrio: casas con niños disfrazados pidiendo dulces -->
+<div class="barrio" aria-hidden="true">
+<svg viewBox="0 0 1400 180" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Calabaza de porche -->
+        <g id="calab" stroke="#140C07" stroke-linejoin="round" stroke-linecap="round">
+            <ellipse cx="0" cy="-8" rx="11" ry="9" fill="#E8731F" stroke-width="2.5"/>
+            <path d="M0 -17 Q1 -22 5 -23" fill="none" stroke="#3F7A2A" stroke-width="3"/>
+            <path d="M-6 -11 l3 -4 l3 4z M3 -11 l3 -4 l3 4z" fill="#140C07" stroke-width="1"/>
+            <path d="M-5 -4 Q0 0 5 -4" fill="none" stroke-width="2"/>
+        </g>
+
+        <!-- Casa grande (el color del cuerpo llega con --c) -->
+        <g id="casa" stroke="#140C07" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="108" y="-140" width="18" height="40" fill="#B8431A"/>
+            <rect x="0" y="-90" width="150" height="90" style="fill:var(--c)"/>
+            <path d="M-10 -90 L75 -148 L160 -90Z" fill="#8A4B24"/>
+            <circle cx="75" cy="-113" r="9" fill="#FFE45C"/>
+            <rect x="20" y="-72" width="34" height="32" fill="#FFE45C"/>
+            <rect x="96" y="-72" width="34" height="32" fill="#FFE45C"/>
+            <path d="M37 -72V-40M20 -56H54M113 -72V-40M96 -56H130" fill="none" stroke-width="2"/>
+            <path d="M60 0V-38A15 15 0 0 1 90 -38V0Z" fill="#2A180D"/>
+            <circle cx="84" cy="-22" r="2.5" fill="#FFE45C" stroke-width="1"/>
+        </g>
+
+        <!-- Casita -->
+        <g id="casita" stroke="#140C07" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="0" y="-80" width="110" height="80" style="fill:var(--c)"/>
+            <path d="M-8 -80 L55 -130 L118 -80Z" fill="#8A4B24"/>
+            <rect x="14" y="-62" width="30" height="28" fill="#FFE45C"/>
+            <path d="M29 -62V-34M14 -48H44" fill="none" stroke-width="2"/>
+            <path d="M62 0V-34A13 13 0 0 1 88 -34V0Z" fill="#2A180D"/>
+            <circle cx="82" cy="-20" r="2.5" fill="#FFE45C" stroke-width="1"/>
+        </g>
+
+        <!-- Niño fantasma -->
+        <g id="k-fantasma" stroke="#140C07" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M-14 0V-28C-14 -50 14 -50 14 -28V0L8 -6L2 0L-4 -6L-10 0Z" fill="#F8EBC4" stroke-width="2.5"/>
+            <circle cx="-5" cy="-30" r="2.6" fill="#140C07" stroke="none"/>
+            <circle cx="5" cy="-30" r="2.6" fill="#140C07" stroke="none"/>
+            <ellipse cx="0" cy="-22" rx="3" ry="4" fill="#140C07" stroke="none"/>
+            <path d="M13 -22Q19 -34 25 -22" fill="none" stroke-width="2"/>
+            <path d="M12 -22H26L24 -9H14Z" fill="#E8731F" stroke-width="2"/>
+        </g>
+
+        <!-- Niña bruja -->
+        <g id="k-bruja" stroke="#140C07" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M0 -32L-14 0H14Z" fill="#140C07" stroke="#F8EBC4" stroke-width="1.5"/>
+            <circle cx="0" cy="-38" r="7" fill="#F5C99B" stroke-width="2"/>
+            <path d="M-8 -43L0 -64L8 -43Z" fill="#140C07" stroke="#F8EBC4" stroke-width="1.5"/>
+            <ellipse cx="0" cy="-43" rx="12" ry="3" fill="#140C07" stroke="#F8EBC4" stroke-width="1.5"/>
+            <path d="M-8 -45H8" fill="none" stroke="#E8731F" stroke-width="2.5"/>
+            <circle cx="-2.5" cy="-38" r="1.2" fill="#140C07" stroke="none"/>
+            <circle cx="2.5" cy="-38" r="1.2" fill="#140C07" stroke="none"/>
+            <path d="M10 -20Q16 -32 22 -20" fill="none" stroke-width="2"/>
+            <path d="M9 -20H23L21 -7H11Z" fill="#E8731F" stroke-width="2"/>
+        </g>
+
+        <!-- Niño calabaza -->
+        <g id="k-calabaza" stroke="#140C07" stroke-linejoin="round" stroke-linecap="round">
+            <ellipse cx="0" cy="-22" rx="16" ry="18" fill="#E8731F" stroke-width="2.5"/>
+            <path d="M0 -40Q1 -46 6 -48" fill="none" stroke="#3F7A2A" stroke-width="3.5"/>
+            <path d="M-9 -28l3 -5l3 5zM3 -28l3 -5l3 5z" fill="#140C07" stroke-width="1"/>
+            <path d="M-8 -17Q0 -9 8 -17" fill="none" stroke-width="2.2"/>
+            <path d="M-6 -4V0M6 -4V0" stroke-width="3"/>
+            <path d="M15 -20Q21 -32 27 -20" fill="none" stroke-width="2"/>
+            <path d="M14 -20H28L26 -7H16Z" fill="#FFE45C" stroke-width="2"/>
+        </g>
+    </defs>
+
+    <!-- Acera -->
+    <rect x="0" y="158" width="1400" height="22" fill="#2A180D" stroke="#140C07" stroke-width="3"/>
+    <path d="M0 170H1400" stroke="#F8EBC4" stroke-width="2" stroke-dasharray="16 12" opacity=".45"/>
+
+    <!-- Casas -->
+    <use href="#casa"   transform="translate(40 158)"   style="--c:#B8431A"/>
+    <use href="#casita" transform="translate(250 158)"  style="--c:#E8731F"/>
+    <use href="#casa"   transform="translate(430 158)"  style="--c:#D9A441"/>
+    <use href="#casita" transform="translate(640 158)"  style="--c:#B8431A"/>
+    <use href="#casa"   transform="translate(820 158)"  style="--c:#E8731F"/>
+    <use href="#casita" transform="translate(1030 158)" style="--c:#D9A441"/>
+    <use href="#casa"   transform="translate(1210 158)" style="--c:#B8431A"/>
+
+    <!-- Calabazas de porche -->
+    <use href="#calab" transform="translate(56 158)"/>
+    <use href="#calab" transform="translate(264 158)"/>
+    <use href="#calab" transform="translate(446 158)"/>
+    <use href="#calab" transform="translate(836 158)"/>
+    <use href="#calab" transform="translate(1044 158)"/>
+    <use href="#calab" transform="translate(1226 158)"/>
+
+    <!-- Niños tocando las puertas -->
+    <g transform="translate(115 158)"><use href="#k-fantasma" class="ninio" style="animation-delay:-.2s"/></g>
+    <g transform="translate(325 158)"><use href="#k-bruja"    class="ninio" style="animation-delay:-.9s"/></g>
+    <g transform="translate(505 158)"><use href="#k-calabaza" class="ninio" style="animation-delay:-.5s"/></g>
+    <g transform="translate(540 158)"><use href="#k-fantasma" class="ninio" style="animation-delay:-1.2s"/></g>
+    <g transform="translate(715 158)"><use href="#k-bruja"    class="ninio" style="animation-delay:-.4s"/></g>
+    <g transform="translate(895 158)"><use href="#k-calabaza" class="ninio" style="animation-delay:-1.4s"/></g>
+    <g transform="translate(930 158)"><use href="#k-bruja"    class="ninio" style="animation-delay:-.7s"/></g>
+    <g transform="translate(1105 158)"><use href="#k-fantasma" class="ninio" style="animation-delay:-1s"/></g>
+    <g transform="translate(1285 158)"><use href="#k-bruja"   class="ninio" style="animation-delay:-.3s"/></g>
+
+    <!-- Globos de diálogo (aparecen de vez en cuando) -->
+    <g class="burbuja" transform="translate(115 0)" style="animation-delay:0s">
+        <path d="M-8 93L0 106L8 93Z" fill="#F8EBC4" stroke="#140C07" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="-64" y="64" width="128" height="30" rx="15" fill="#F8EBC4" stroke="#140C07" stroke-width="2.5"/>
+        <text x="0" y="85" text-anchor="middle" font-family="Chewy, Nunito, cursive" font-size="16" fill="#140C07">¡Dulce o truco!</text>
+    </g>
+    <g class="burbuja" transform="translate(895 0)" style="animation-delay:-4.5s">
+        <path d="M-8 93L0 106L8 93Z" fill="#F8EBC4" stroke="#140C07" stroke-width="2.5" stroke-linejoin="round"/>
+        <rect x="-64" y="64" width="128" height="30" rx="15" fill="#F8EBC4" stroke="#140C07" stroke-width="2.5"/>
+        <text x="0" y="85" text-anchor="middle" font-family="Chewy, Nunito, cursive" font-size="16" fill="#140C07">¡Dulce o truco!</text>
+    </g>
+</svg>
+</div>
 
 <svg class="tree tree-l" viewBox="0 0 220 420" aria-hidden="true"><use href="#arbol"/></svg>
 <svg class="tree tree-r" viewBox="0 0 220 420" aria-hidden="true"><use href="#arbol"/></svg>
