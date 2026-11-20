@@ -12,6 +12,7 @@ Resultado esperado:
 """
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.auth.models import Group, Permission, User
 from django.test import TestCase
 from django.urls import reverse
@@ -40,14 +41,14 @@ class AuthBasicTest(TestCase):
         r = self.client.get(reverse('account_login'))
         self.assertTemplateUsed(r, 'account/login.html')
 
-    def test_login_correcto_redirige_a_productos(self):
-        """Login con credenciales válidas → redirige a LOGIN_REDIRECT_URL."""
+    def test_login_correcto_redirige_a_login_redirect_url(self):
+        """Login con credenciales válidas → redirige a settings.LOGIN_REDIRECT_URL."""
         User.objects.create_user('testlogin', password='pass123')
         r = self.client.post(reverse('account_login'), {
             'login':    'testlogin',
             'password': 'pass123',
         })
-        self.assertRedirects(r, '/productos/',
+        self.assertRedirects(r, settings.LOGIN_REDIRECT_URL,
                              fetch_redirect_response=False)
 
 

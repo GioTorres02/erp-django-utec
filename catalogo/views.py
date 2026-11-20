@@ -14,6 +14,11 @@ Estructura del carrito en sesión:
         },
         ...
     }
+
+Pedido en curso (W14, editado):
+    request.session['pedido_pendiente'] = <pk del Pedido en estado 'pendiente'>
+    Permite reutilizar el mismo pedido y el mismo PaymentIntent si el
+    usuario hace doble clic o recarga la página de pago.
 """
 from decimal import Decimal
 
@@ -124,6 +129,40 @@ def _sincronizar_precios(request, carrito: dict) -> dict:
         _guardar_carrito(request, actualizado)
 
     return actualizado
+
+
+def _obtener_pedido_pendiente(request, cliente, snapshot: list, total: Decimal) -> Pedido:
+    """Devuelve el pedido pendiente de la sesión o crea uno nuevo.
+
+    Si el usuario hace doble clic o recarga la página de pago, se reutiliza
+    el mismo Pedido (y, con él, el mismo PaymentIntent en Stripe). Si el
+    carrito cambió, se actualizan total y snapshot del pedido existente.
+    """
+    pedido = None
+    pedido_id = request.session.get('pedido_pendiente')
+    if pedido_id:
+        pedido = (
+            Pedido.objects
+            .filter(pk=pedido_id, cliente=cliente, estado='pendiente')
+            .first()
+        )
+
+    if pedido is None:
+        pedido = Pedido.objects.create(
+            numero_pedido  = generar_numero_pedido(),
+            cliente        = cliente,
+            estado         = 'pendiente',
+            total_pagado   = total,
+            items_snapshot = snapshot,
+        )
+    else:
+        pedido.total_pagado   = total
+        pedido.items_snapshot = snapshot
+        pedido.save(update_fields=['total_pagado', 'items_snapshot'])
+
+    request.session['pedido_pendiente'] = pedido.pk
+    request.session.modified = True
+    return pedido
 
 
 # ── CARRITO ────────────────────────────────────────────────────────────────
@@ -257,9 +296,7 @@ def checkout(request):
             # 1. Vincular el usuario con el Cliente del ERP
             cliente = obtener_o_crear_cliente(request.user)
 
-            # 2. Crear el Pedido con snapshot del carrito
-            numero = generar_numero_pedido()
-
+            # 2. Snapshot del carrito y pedido pendiente (reutilizado si existe)
             snapshot = [
                 {
                     'producto_id': int(prod_id),
@@ -269,16 +306,13 @@ def checkout(request):
                 }
                 for prod_id, datos in carrito.items()
             ]
-
-            pedido = Pedido.objects.create(
-                numero_pedido  = numero,
-                cliente        = cliente,
-                estado         = 'pendiente',
-                total_pagado   = totales['total'],
-                items_snapshot = snapshot,
+            pedido = _obtener_pedido_pendiente(
+                request, cliente, snapshot, totales['total']
             )
 
-            # 3. Crear PaymentIntent en Stripe (monto en centavos)
+            # 3. PaymentIntent en Stripe (monto en centavos).
+            #    La clave incluye el monto: si el carrito cambia, Stripe no
+            #    confunde el intento nuevo con el anterior.
             monto_centavos = int(totales['total'] * 100)
 
             intent = stripe.PaymentIntent.create(
@@ -289,7 +323,7 @@ def checkout(request):
                     'pedido_num': pedido.numero_pedido,
                     'cliente':    cliente.nombre,
                 },
-                idempotency_key = f'pedido-{pedido.pk}',
+                idempotency_key = f'pedido-{pedido.pk}-{monto_centavos}',
             )
 
             # 4. Devolver client_secret al template
@@ -328,16 +362,18 @@ def checkout(request):
 
 @login_required
 def pago_exitoso(request, pedido_id: int):
-    """Página de confirmación tras el pago.
+    """Confirmación post-pago. Solo muestra pedidos del cliente actual.
 
-    Solo muestra el pedido si pertenece al Cliente del usuario actual.
     No marca el pedido como pagado: eso lo hace el webhook
-    de Stripe (payment_intent.succeeded).
+    de Stripe (payment_intent.succeeded). W16: esta vista NO encola
+    la tarea de correo; la encola el webhook.
     """
     cliente = obtener_o_crear_cliente(request.user)
     pedido  = get_object_or_404(Pedido, pk=pedido_id, cliente=cliente)
 
     _guardar_carrito(request, {})
+    request.session.pop('pedido_pendiente', None)  # el intento ya terminó
+
     messages.success(
         request,
         f'Pago recibido. Tu pedido {pedido.numero_pedido} está en proceso. '
