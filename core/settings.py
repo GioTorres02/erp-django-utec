@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
+    'anymail',   # correo con SendGrid (W17)
     # Apps del ERP
     'clientes',
     'proveedores',
@@ -332,6 +333,7 @@ LOGGING = {
         'django.request': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
     },
 }
+
 # ── CELERY — Cola de tareas asíncronas (W16) ──────────────────────────────
 # REDIS_URL definida (Render → Key Value):
 #     las tareas se encolan en Redis y las procesa el worker.
@@ -374,3 +376,32 @@ CELERY_TASK_DEFAULT_QUEUE = 'erp_django'
 
 # En modo EAGER, las excepciones de la tarea se propagan (útil en tests)
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# ── CORREO ELECTRÓNICO (W17) ──────────────────────────────────────────────
+SENDGRID_API_KEY = env('SENDGRID_API_KEY', default='')
+
+# Con SENDGRID_API_KEY definida → SendGrid (django-anymail).
+# Sin ella (desarrollo) → consola, que imprime el correo en la terminal.
+# Se puede forzar con EMAIL_BACKEND en .env o en Render.
+EMAIL_BACKEND = env(
+    'EMAIL_BACKEND',
+    default=(
+        'anymail.backends.sendgrid.EmailBackend'
+        if SENDGRID_API_KEY
+        else 'django.core.mail.backends.console.EmailBackend'
+    ),
+)
+
+# Debe ser el correo verificado como Single Sender en SendGrid
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='ERP Django <noreply@erp-django.com>')
+
+EMAIL_SUBJECT_PREFIX = '[ERP Django] '
+
+# Administradores que reciben alertas del sistema
+ADMINS = [
+    ('Admin ERP', env('ADMIN_EMAIL', default='admin@erp-django.com')),
+]
+
+ANYMAIL = {
+    'SENDGRID_API_KEY': SENDGRID_API_KEY,
+}
