@@ -1,14 +1,11 @@
 # core/settings.py
 import sys
+from datetime import timedelta
 from pathlib import Path
-# core/settings.py — verificar que existe al inicio:
-from datetime import timedelta   # ← agregar si no está
-
-# (ya debería estar si se instaló dj-database-url en W03)
-
 
 import dj_database_url
 import environ
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,7 +20,7 @@ SECRET_KEY = env('SECRET_KEY', default='dev-key-insegura-solo-para-desarrollo')
 DEBUG = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
-# Render asigna su propio hostname en esta variable.
+# Render asigna su propio hostname en esta variable
 RENDER_EXTERNAL_HOSTNAME = env('RENDER_EXTERNAL_HOSTNAME', default='')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
@@ -138,8 +135,8 @@ USE_TZ = True
 # ── Archivos estáticos ────────────────────────────────────────────────────
 # La música de los vinilos va en static/musica/ (sabrina.mp3, olivia.mp3, ...)
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'           # destino de collectstatic
-STATICFILES_DIRS = [BASE_DIR / 'static']         # fuentes adicionales
+STATIC_ROOT = BASE_DIR / 'staticfiles'      # destino de collectstatic
+STATICFILES_DIRS = [BASE_DIR / 'static']    # fuentes adicionales
 
 # WhiteNoise sirve los estáticos directo desde las carpetas del proyecto
 # (admin, Jazzmin, static/img, etc.) aunque collectstatic no los haya copiado.
@@ -188,7 +185,7 @@ if USE_CLOUDINARY:
 
 # ── Autenticación ─────────────────────────────────────────────────────────
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/catalogo/'      # tras iniciar sesión, la tienda
+LOGIN_REDIRECT_URL = '/catalogo/'    # tras iniciar sesión, la tienda
 LOGOUT_REDIRECT_URL = '/'
 
 # ── DRF ──────────────────────────────────────────────────────────────────
@@ -339,49 +336,6 @@ LOGGING = {
     },
 }
 
-# ── CELERY — Cola de tareas asíncronas (W16) ──────────────────────────────
-# REDIS_URL definida (Render → Key Value):
-#     las tareas se encolan en Redis y las procesa el worker.
-# REDIS_URL vacía (laboratorio sin Docker / tests):
-#     modo EAGER → .delay() ejecuta la tarea en el mismo proceso,
-#     sin broker ni worker. El código de las vistas no cambia.
-REDIS_URL = env('REDIS_URL', default='')
-
-if REDIS_URL:
-    # Broker: Redis almacena los mensajes de las tareas pendientes
-    CELERY_BROKER_URL     = REDIS_URL
-    # Backend: Redis almacena los resultados de las tareas
-    CELERY_RESULT_BACKEND = REDIS_URL
-    CELERY_TASK_ALWAYS_EAGER = False
-else:
-    CELERY_BROKER_URL        = 'memory://'
-    CELERY_RESULT_BACKEND    = 'cache+memory://'
-    CELERY_TASK_ALWAYS_EAGER = True
-
-# Los resultados caducan en 1 hora (el Key Value gratuito tiene 25 MB)
-CELERY_RESULT_EXPIRES = 3600
-
-# Formato de serialización (JSON es seguro y portable)
-CELERY_ACCEPT_CONTENT    = ['json']
-CELERY_TASK_SERIALIZER   = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-
-# Zona horaria (heredar de Django)
-CELERY_TIMEZONE = TIME_ZONE   # 'America/Mexico_City'
-
-# Reintentos automáticos ante fallos de conexión al broker
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
-# Tiempo máximo que puede correr una tarea antes de ser terminada (segundos)
-CELERY_TASK_SOFT_TIME_LIMIT = 300   # 5 minutos
-CELERY_TASK_TIME_LIMIT       = 360  # 6 minutos (hard limit)
-
-# Cola por defecto: debe coincidir con --queues=erp_django del worker
-CELERY_TASK_DEFAULT_QUEUE = 'erp_django'
-
-# En modo EAGER, las excepciones de la tarea se propagan (útil en tests)
-CELERY_TASK_EAGER_PROPAGATES = True
-
 # ── CORREO ELECTRÓNICO (W17) ──────────────────────────────────────────────
 SENDGRID_API_KEY = env('SENDGRID_API_KEY', default='')
 
@@ -399,7 +353,6 @@ EMAIL_BACKEND = env(
 
 # Debe ser el correo verificado como Single Sender en SendGrid
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='ERP Django <noreply@erp-django.com>')
-
 EMAIL_SUBJECT_PREFIX = '[ERP Django] '
 
 # Administradores que reciben alertas del sistema
@@ -410,29 +363,67 @@ ADMINS = [
 ANYMAIL = {
     'SENDGRID_API_KEY': SENDGRID_API_KEY,
 }
-# core/settings.py — agregar después de CELERY_TASK_ALWAYS_EAGER:
+
+# ── CELERY — Cola de tareas asíncronas (W16) ──────────────────────────────
+# REDIS_URL definida (Render → Key Value):
+#     las tareas se encolan en Redis y las procesa el worker.
+# REDIS_URL vacía (laboratorio sin Docker / tests):
+#     modo EAGER → .delay() ejecuta la tarea en el mismo proceso,
+#     sin broker ni worker. El código de las vistas no cambia.
+REDIS_URL = env('REDIS_URL', default='')
+
+if REDIS_URL:
+    # Broker: Redis almacena los mensajes de las tareas pendientes
+    CELERY_BROKER_URL = REDIS_URL
+    # Backend: Redis almacena los resultados de las tareas
+    CELERY_RESULT_BACKEND = REDIS_URL
+    CELERY_TASK_ALWAYS_EAGER = False
+else:
+    CELERY_BROKER_URL = 'memory://'
+    CELERY_RESULT_BACKEND = 'cache+memory://'
+    CELERY_TASK_ALWAYS_EAGER = True
+
+# Los resultados caducan en 1 hora (el Key Value gratuito tiene 25 MB)
+CELERY_RESULT_EXPIRES = 3600
+
+# Formato de serialización (JSON es seguro y portable)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Zona horaria (heredar de Django)
+CELERY_TIMEZONE = TIME_ZONE   # 'America/Mexico_City'
+
+# Reintentos automáticos ante fallos de conexión al broker
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Tiempo máximo que puede correr una tarea antes de ser terminada (segundos)
+CELERY_TASK_SOFT_TIME_LIMIT = 300   # 5 minutos
+CELERY_TASK_TIME_LIMIT = 360        # 6 minutos (hard limit)
+
+# Cola por defecto: debe coincidir con --queues=erp_django del worker
+CELERY_TASK_DEFAULT_QUEUE = 'erp_django'
+
+# En modo EAGER, las excepciones de la tarea se propagan (útil en tests)
+CELERY_TASK_EAGER_PROPAGATES = True
 
 # ── CELERY BEAT — Tareas programadas ──────────────────────────────────────
-from celery.schedules import crontab
+# Necesario para que Beat use la zona horaria de Django (no UTC)
+CELERY_BEAT_TIMEZONE = TIME_ZONE   # 'America/Mexico_City'
 
 CELERY_BEAT_SCHEDULE = {
-
     # Verificar stock bajo cada hora
     'verificar-stock-bajo-cada-hora': {
-        'task':     'ventas.verificar_stock_bajo',
+        'task': 'ventas.verificar_stock_bajo',
         'schedule': timedelta(hours=1),
-        'args':     (5,),   # umbral = 5 unidades
-        'options':  {'queue': 'erp_django'},
+        'args': (5,),   # umbral = 5 unidades
+        'options': {'queue': 'erp_django'},
     },
 
     # Reporte de ventas diario a las 8:00 AM (hora México)
     'reporte-ventas-diario-8am': {
-        'task':     'ventas.reporte_ventas_diario',
+        'task': 'ventas.reporte_ventas_diario',
         'schedule': crontab(hour=8, minute=0),
-        'options':  {'queue': 'erp_django'},
+        'options': {'queue': 'erp_django'},
     },
-
 }
-
-# Necesario para que Beat use la zona horaria de Django (no UTC)
-CELERY_BEAT_TIMEZONE = TIME_ZONE   # 'America/Mexico_City'

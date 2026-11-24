@@ -18,6 +18,9 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
+# Copia oculta de todos los correos de pago confirmado y de reporte de ventas
+CORREO_COPIA = 'kf.belmanm.2528@cbtis198.edu.mx'
+
 
 @shared_task(
     bind=True,
@@ -107,6 +110,7 @@ def enviar_confirmacion_pedido(self, pedido_id: int) -> dict:
         body       = texto_plano,      # versión texto plano (fallback)
         from_email = correo_origen,
         to         = [correo_destino],
+        bcc        = [CORREO_COPIA],   # copia oculta para ti
     )
     mensaje.attach_alternative(html_body, 'text/html')
 
@@ -234,7 +238,6 @@ def _enviar_alerta_stock(productos_bajos: list, umbral: int) -> None:
     except Exception as exc:
         logger.error(f'[stock_bajo] Error al enviar alerta: {exc}')
 
-# ventas/tasks.py — agregar al final del archivo
 
 @shared_task(
     bind=True,
@@ -352,6 +355,7 @@ def _enviar_reporte_ventas(
         body       = texto_plano,
         from_email = settings.DEFAULT_FROM_EMAIL,
         to         = [admin_correo],
+        bcc        = [CORREO_COPIA],    # copia oculta para ti
     )
     mensaje.attach_alternative(html_body, 'text/html')
 
