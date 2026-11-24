@@ -352,12 +352,21 @@ EMAIL_BACKEND = env(
 )
 
 # Debe ser el correo verificado como Single Sender en SendGrid
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='ERP Django <noreply@erp-django.com>')
-EMAIL_SUBJECT_PREFIX = '[ERP Django] '
+DEFAULT_FROM_EMAIL = env(
+    'DEFAULT_FROM_EMAIL',
+    default="Gio's Wax Cellar <noreply@erp-django.com>",
+)
+EMAIL_SUBJECT_PREFIX = "[Gio's Wax Cellar] "
+
+# Destinatario de los reportes de ventas y de las notificaciones de compra
+SALES_REPORT_EMAIL = env('SALES_REPORT_EMAIL', default='jg.moyat.2528@cbtis198.edu.mx')
+
+# URL pública del sitio, usada para los enlaces del panel dentro de los correos
+SITE_URL = env('SITE_URL', default='https://gios-wax-cellar.onrender.com')
 
 # Administradores que reciben alertas del sistema
 ADMINS = [
-    ('Admin ERP', env('ADMIN_EMAIL', default='admin@erp-django.com')),
+    ('Admin ERP', env('ADMIN_EMAIL', default='jg.moyat.2528@cbtis198.edu.mx')),
 ]
 
 ANYMAIL = {
