@@ -10,8 +10,11 @@ Verificación de seguridad:
 Eventos manejados:
     payment_intent.succeeded      → Pedido.estado = 'pagado'
                                     Descontar stock
-                                    Encolar correo de confirmación y reporte del día
+                                    Encolar correo de confirmación al cliente
     payment_intent.payment_failed → Pedido.estado = 'cancelado'
+
+El reporte de ventas NO se envía desde aquí: se envía con el botón
+del administrador (vista enviar_reporte_manual) o a las 8:00 AM (Celery Beat).
 """
 import logging
 
@@ -24,7 +27,7 @@ from django.views.decorators.http import require_POST
 
 from productos.models import Producto
 from ventas.models import Pedido
-from ventas.tasks import enviar_confirmacion_pedido, reporte_ventas_diario
+from ventas.tasks import enviar_confirmacion_pedido
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +82,10 @@ def stripe_webhook(request) -> HttpResponse:
 # ── HANDLERS INTERNOS ──────────────────────────────────────────────────
 
 def _manejar_pago_exitoso(payment_intent: dict) -> None:
-    """Marca el pedido como pagado, descuenta stock y encola los correos.
+    """Marca el pedido como pagado, descuenta stock y encola el correo al cliente.
 
     El UPDATE condicional es atómico: solo una entrega del webhook logra
-    pasar el pedido de no pagado a pagado, así que los correos y el stock
+    pasar el pedido de no pagado a pagado, así que el correo y el stock
     se procesan una sola vez aunque Stripe reenvíe el evento.
     """
     pedido_id = _extraer_pedido_id(payment_intent)
@@ -113,14 +116,11 @@ def _manejar_pago_exitoso(payment_intent: dict) -> None:
     logger.info(f'Pedido {pedido.numero_pedido} actualizado a "pagado".')
 
     _descontar_stock(pedido)
-
-    # La vista no usa transacción atómica, así que el update ya quedó
-    # guardado y el reporte del día incluye esta compra.
-    _encolar_correos(pedido.pk, pedido.numero_pedido)
+    _encolar_correo_cliente(pedido.pk, pedido.numero_pedido)
 
 
-def _encolar_correos(pedido_pk: int, numero_pedido: str) -> None:
-    """Encola el correo de confirmación al cliente y el reporte del día.
+def _encolar_correo_cliente(pedido_pk: int, numero_pedido: str) -> None:
+    """Encola solo el correo de confirmación al cliente.
 
     Si Redis no responde, el pago ya quedó registrado: se deja constancia
     en el log y se responde 200 a Stripe igualmente.
@@ -131,14 +131,6 @@ def _encolar_correos(pedido_pk: int, numero_pedido: str) -> None:
         logger.exception(
             f'Webhook: no se pudo encolar la confirmación del pedido '
             f'{numero_pedido} (¿Redis disponible?).'
-        )
-
-    try:
-        reporte_ventas_diario.delay()
-    except Exception:
-        logger.exception(
-            f'Webhook: no se pudo encolar el reporte de ventas '
-            f'tras el pedido {numero_pedido}.'
         )
 
 
