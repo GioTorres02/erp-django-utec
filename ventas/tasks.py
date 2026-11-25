@@ -1,11 +1,9 @@
 # ventas/tasks.py
-"""Tareas asíncronas de la app ventas — W17.
-
-W17 implementa el envío real de correos con django-anymail + SendGrid.
+"""Tareas asíncronas de la app ventas — W16/W17/W18.
 
 Idempotencia:
-    Pedido.correo_enviado=True previene envíos duplicados si la tarea
-    se llama más de una vez para el mismo pedido.
+    Pedido.correo_enviado=True previene envíos duplicados de confirmación
+    si la tarea se llama más de una vez para el mismo pedido.
 """
 import logging
 from decimal import Decimal
@@ -13,13 +11,14 @@ from decimal import Decimal
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Sum
 from django.template.loader import render_to_string
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-# Copia oculta de todos los correos de pago confirmado y de reporte de ventas
-CORREO_COPIA = 'kf.belmanm.2528@cbtis198.edu.mx'
+# Copia oculta de los correos de confirmación y de reporte de ventas
+CORREO_COPIA = 'jg.moyat.2528@cbtis198.edu.mx'
 
 
 @shared_task(
@@ -33,7 +32,7 @@ def enviar_confirmacion_pedido(self, pedido_id: int) -> dict:
 
     Garantías:
         - Idempotente: si correo_enviado=True, aborta sin error.
-        - Retry automático hasta 3 veces en caso de fallo de SendGrid.
+        - Retry automático hasta 3 veces si falla el envío.
 
     Args:
         pedido_id: ID del Pedido confirmado.
@@ -42,79 +41,62 @@ def enviar_confirmacion_pedido(self, pedido_id: int) -> dict:
         dict con estado, pedido_id y correo del destinatario.
     """
     from configuracion.models import ConfiguracionERP  # import local
-    from ventas.models        import Pedido             # import local
+    from ventas.models import Pedido                   # import local
 
     try:
         pedido = Pedido.objects.select_related('cliente').get(pk=pedido_id)
     except Pedido.DoesNotExist:
-        logger.error(
-            f'[correo_confirmacion] Pedido {pedido_id} no existe.'
-        )
+        logger.error(f'[correo_confirmacion] Pedido {pedido_id} no existe.')
         return {'estado': 'error', 'razon': 'Pedido no encontrado'}
 
-    # ── Verificación de idempotencia ────────────────────────────────────
     if pedido.correo_enviado:
         logger.info(
             f'[correo_confirmacion] Pedido {pedido.numero_pedido}: '
             f'correo ya enviado anteriormente — skip.'
         )
         return {
-            'estado':    'skip',
+            'estado': 'skip',
             'pedido_id': pedido_id,
-            'razon':     'correo ya enviado',
+            'razon': 'correo ya enviado',
         }
 
     config = ConfiguracionERP.get_instance()
 
-    # ── Preparar los productos con subtotal calculado ───────────────────
-    # El snapshot guarda precio como texto ('6500.00'), así que lo
-    # convertimos a Decimal y calculamos el subtotal aquí, no en la
-    # plantilla (widthratio no sirve para multiplicar).
+    # El snapshot guarda el precio como texto ('6500.00'); calculamos
+    # el subtotal aquí, porque la plantilla no puede multiplicar.
     items = []
     for item in pedido.items_snapshot or []:
-        precio   = Decimal(item['precio'])
+        precio = Decimal(item['precio'])
         cantidad = int(item['cantidad'])
         items.append({**item, 'subtotal': precio * cantidad})
 
-    url_pedido = (
-        f"https://erp-django-utec.onrender.com"
-        f"/ventas/{pedido.pk}/"
-    )
+    url_pedido = f"https://erp-django-utec.onrender.com/ventas/{pedido.pk}/"
 
     contexto = {
-        'pedido':     pedido,
-        'config':     config,
-        'items':      items,
+        'pedido': pedido,
+        'config': config,
+        'items': items,
         'url_pedido': url_pedido,
     }
 
-    # ── Renderizar templates ────────────────────────────────────────────
-    # render_to_string sin request (las tareas Celery no tienen request)
     asunto = (
         f'Confirmación de pedido {pedido.numero_pedido} '
         f'— {config.nombre_empresa}'
     )
-    texto_plano = render_to_string(
-        'emails/confirmacion_pedido.txt', contexto
-    )
-    html_body = render_to_string(
-        'emails/confirmacion_pedido.html', contexto
-    )
+    texto_plano = render_to_string('emails/confirmacion_pedido.txt', contexto)
+    html_body = render_to_string('emails/confirmacion_pedido.html', contexto)
 
-    # ── Construir el correo ────────────────────────────────────────────
     correo_destino = pedido.cliente.correo
-    correo_origen  = settings.DEFAULT_FROM_EMAIL
 
     mensaje = EmailMultiAlternatives(
-        subject    = asunto,
-        body       = texto_plano,      # versión texto plano (fallback)
-        from_email = correo_origen,
-        to         = [correo_destino],
-        bcc        = [CORREO_COPIA],   # copia oculta para ti
+        subject=asunto,
+        body=texto_plano,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[correo_destino],
+        bcc=[CORREO_COPIA],
     )
     mensaje.attach_alternative(html_body, 'text/html')
 
-    # ── Enviar y manejar errores ───────────────────────────────────────
     try:
         mensaje.send()
         logger.info(
@@ -122,14 +104,13 @@ def enviar_confirmacion_pedido(self, pedido_id: int) -> dict:
             f'para pedido {pedido.numero_pedido}.'
         )
 
-        # Marcar como enviado para evitar duplicados
         pedido.correo_enviado = True
         pedido.save(update_fields=['correo_enviado'])
 
         return {
-            'estado':    'ok',
+            'estado': 'ok',
             'pedido_id': pedido_id,
-            'correo':    correo_destino,
+            'correo': correo_destino,
         }
 
     except Exception as exc:
@@ -137,7 +118,6 @@ def enviar_confirmacion_pedido(self, pedido_id: int) -> dict:
             f'[correo_confirmacion] Error al enviar correo para pedido '
             f'{pedido.numero_pedido}: {exc}'
         )
-        # Reintento automático con Celery (hasta max_retries=3)
         raise self.retry(exc=exc, countdown=60 * (self.request.retries + 1))
 
 
@@ -149,15 +129,13 @@ def enviar_confirmacion_pedido(self, pedido_id: int) -> dict:
 def verificar_stock_bajo(self, umbral: int = 5) -> dict:
     """Verifica productos con stock bajo y envía alerta al admin.
 
-    W17: Si hay productos bajo el umbral, envía correo a ADMINS[0].
-
     Args:
         umbral: cantidad mínima antes de alertar (default: 5).
 
     Returns:
         dict con conteo y lista de productos con stock bajo.
     """
-    from productos.models import Producto   # import local
+    from productos.models import Producto  # import local
 
     productos_bajos = list(
         Producto.objects
@@ -168,22 +146,19 @@ def verificar_stock_bajo(self, umbral: int = 5) -> dict:
     )
 
     if not productos_bajos:
-        logger.info(
-            f'[stock_bajo] Todos los productos tienen stock ≥ {umbral}. OK.'
-        )
+        logger.info(f'[stock_bajo] Todos los productos tienen stock ≥ {umbral}. OK.')
         return {'umbral': umbral, 'total': 0, 'productos_bajos': []}
 
     logger.warning(
         f'[stock_bajo] {len(productos_bajos)} producto(s) con stock < {umbral}.'
     )
 
-    # Enviar alerta por correo si hay administradores configurados
     if settings.ADMINS:
         _enviar_alerta_stock(productos_bajos, umbral)
 
     return {
-        'umbral':          umbral,
-        'total':           len(productos_bajos),
+        'umbral': umbral,
+        'total': len(productos_bajos),
         'productos_bajos': productos_bajos,
     }
 
@@ -193,39 +168,35 @@ def _enviar_alerta_stock(productos_bajos: list, umbral: int) -> None:
 
     Args:
         productos_bajos: lista de dicts con nombre, stock y categoría.
-        umbral:          umbral mínimo configurado.
+        umbral: umbral mínimo configurado.
     """
-    from configuracion.models import ConfiguracionERP   # import local
+    from configuracion.models import ConfiguracionERP  # import local
 
     config = ConfiguracionERP.get_instance()
-    fecha  = timezone.now().strftime('%d/%m/%Y %H:%M')
+    fecha = timezone.now().strftime('%d/%m/%Y %H:%M')
 
-    url_admin = (
-        'https://erp-django-utec.onrender.com/admin/productos/producto/'
-    )
+    url_admin = 'https://erp-django-utec.onrender.com/admin/productos/producto/'
 
     contexto = {
-        'productos_bajos':  productos_bajos,
-        'total_productos':  len(productos_bajos),
-        'umbral':           umbral,
-        'fecha':            fecha,
-        'url_admin':        url_admin,
-        'config':           config,
+        'productos_bajos': productos_bajos,
+        'total_productos': len(productos_bajos),
+        'umbral': umbral,
+        'fecha': fecha,
+        'url_admin': url_admin,
+        'config': config,
     }
 
-    asunto = (
-        f'[ALERTA] {len(productos_bajos)} producto(s) con stock < {umbral}'
-    )
-    texto_plano = render_to_string('emails/alerta_stock.txt',  contexto)
-    html_body   = render_to_string('emails/alerta_stock.html', contexto)
+    asunto = f'[ALERTA] {len(productos_bajos)} producto(s) con stock < {umbral}'
+    texto_plano = render_to_string('emails/alerta_stock.txt', contexto)
+    html_body = render_to_string('emails/alerta_stock.html', contexto)
 
-    admin_nombre, admin_correo = settings.ADMINS[0]
+    _, admin_correo = settings.ADMINS[0]
 
     mensaje = EmailMultiAlternatives(
-        subject    = asunto,
-        body       = texto_plano,
-        from_email = settings.DEFAULT_FROM_EMAIL,
-        to         = [admin_correo],
+        subject=asunto,
+        body=texto_plano,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[admin_correo],
     )
     mensaje.attach_alternative(html_body, 'text/html')
 
@@ -245,117 +216,102 @@ def _enviar_alerta_stock(productos_bajos: list, umbral: int) -> None:
     name='ventas.reporte_ventas_diario',
 )
 def reporte_ventas_diario(self) -> dict:
-    """Genera y envía el reporte diario de ventas al administrador.
+    """Genera y envía el reporte de ventas del día.
 
-    Se ejecuta automáticamente a las 8:00 AM todos los días
-    mediante Celery Beat (configurado en CELERY_BEAT_SCHEDULE).
-
-    Cálculos realizados en SQL (no en Python) para máxima eficiencia:
-        - Total de pedidos pagados hoy
-        - Total facturado (suma de total_pagado)
-        - Top 5 productos por ingreso del día
+    Se ejecuta a las 8:00 AM (Celery Beat) y después de cada pago
+    confirmado (desde el webhook). Solo cuenta pedidos con estado 'pagado'.
 
     Returns:
         dict con total_pedidos, total_facturado y top_productos.
     """
-    from decimal import Decimal
+    from configuracion.models import ConfiguracionERP  # import local
+    from ventas.models import Pedido                   # import local
 
-    from django.db.models import (
-        DecimalField, ExpressionWrapper, F, Sum,
-    )
-    from django.utils import timezone
-
-    from configuracion.models import ConfiguracionERP   # import local
-    from ventas.models        import DetalleVenta, Pedido  # import local
-
-    hoy    = timezone.localdate()
+    hoy = timezone.localdate()
     config = ConfiguracionERP.get_instance()
 
-    # ── 1. KPIs del día ───────────────────────────────────────────────
-    pedidos_hoy = Pedido.objects.filter(
-        fecha_pedido__date=hoy,
-        estado='pagado'
-    )
-    total_pedidos   = pedidos_hoy.count()
+    pedidos_hoy = Pedido.objects.filter(fecha_pedido__date=hoy, estado='pagado')
+    total_pedidos = pedidos_hoy.count()
     total_facturado = pedidos_hoy.aggregate(
         total=Sum('total_pagado')
     )['total'] or Decimal('0.00')
 
-    # ── 2. Top 5 productos por ingreso del día ─────────────────────────
-    top_productos = list(
-        DetalleVenta.objects
-        .filter(venta__fecha__date=hoy)
-        .values(nombre=F('producto__nombre'))
-        .annotate(
-            unidades=Sum('cantidad'),
-            ingreso=Sum(
-                ExpressionWrapper(
-                    F('cantidad') * F('precio_unitario'),
-                    output_field=DecimalField(max_digits=12, decimal_places=2)
-                )
+    # Top 5 por ingreso, calculado desde el snapshot de cada pedido pagado
+    acumulado = {}
+    for pedido in pedidos_hoy:
+        for item in pedido.items_snapshot or []:
+            nombre = item.get('nombre', 'Producto')
+            cantidad = int(item.get('cantidad', 0))
+            subtotal = Decimal(str(item.get('precio', '0'))) * cantidad
+
+            fila = acumulado.setdefault(
+                nombre,
+                {'nombre': nombre, 'unidades': 0, 'ingreso': Decimal('0.00')},
             )
-        )
-        .order_by('-ingreso')[:5]
-    )
+            fila['unidades'] += cantidad
+            fila['ingreso'] += subtotal
+
+    top_productos = sorted(
+        acumulado.values(), key=lambda f: f['ingreso'], reverse=True
+    )[:5]
 
     logger.info(
         f'[reporte_diario] {hoy}: {total_pedidos} pedidos, '
-        f'${total_facturado} facturados, '
-        f'{len(top_productos)} productos top.'
+        f'${total_facturado} facturados, {len(top_productos)} productos top.'
     )
 
-    # ── 3. Enviar correo al admin si está configurado ──────────────────
     if settings.ADMINS:
         _enviar_reporte_ventas(
             hoy, total_pedidos, total_facturado, top_productos, config
         )
 
     return {
-        'fecha':           str(hoy),
-        'total_pedidos':   total_pedidos,
+        'fecha': str(hoy),
+        'total_pedidos': total_pedidos,
         'total_facturado': str(total_facturado),
-        'top_productos':   top_productos,
+        'top_productos': top_productos,
     }
 
 
 def _enviar_reporte_ventas(
     fecha, total_pedidos, total_facturado, top_productos, config
 ) -> None:
-    """Envía el reporte diario al primer administrador configurado.
+    """Envía el reporte de ventas al primer administrador configurado.
 
     Args:
-        fecha:           Objeto date del día reportado.
-        total_pedidos:   Número de pedidos pagados.
+        fecha: objeto date del día reportado.
+        total_pedidos: número de pedidos pagados.
         total_facturado: Decimal con la suma total.
-        top_productos:   Lista de dicts con nombre, unidades, ingreso.
-        config:          Instancia de ConfiguracionERP.
+        top_productos: lista de dicts con nombre, unidades e ingreso.
+        config: instancia de ConfiguracionERP.
     """
-    url_admin = (
-        'https://erp-django-utec.onrender.com/admin/ventas/venta/'
-    )
+    url_admin = 'https://erp-django-utec.onrender.com/admin/ventas/venta/'
     fecha_str = fecha.strftime('%d/%m/%Y')
 
     contexto = {
-        'fecha':           fecha_str,
-        'config':          config,
-        'total_pedidos':   total_pedidos,
+        'fecha': fecha_str,
+        'config': config,
+        'total_pedidos': total_pedidos,
         'total_facturado': total_facturado,
-        'top_productos':   top_productos,
-        'url_admin':       url_admin,
+        'top_productos': top_productos,
+        'url_admin': url_admin,
     }
 
-    asunto      = f'Reporte de ventas del {fecha_str} — {config.nombre_empresa}'
-    texto_plano = render_to_string('emails/reporte_ventas.txt',  contexto)
-    html_body   = render_to_string('emails/reporte_ventas.html', contexto)
+    asunto = (
+        f'Reporte de ventas {timezone.localtime():%d/%m/%Y %H:%M} '
+        f'— {config.nombre_empresa}'
+    )
+    texto_plano = render_to_string('emails/reporte_ventas.txt', contexto)
+    html_body = render_to_string('emails/reporte_ventas.html', contexto)
 
-    admin_nombre, admin_correo = settings.ADMINS[0]
+    _, admin_correo = settings.ADMINS[0]
 
     mensaje = EmailMultiAlternatives(
-        subject    = asunto,
-        body       = texto_plano,
-        from_email = settings.DEFAULT_FROM_EMAIL,
-        to         = [admin_correo],
-        bcc        = [CORREO_COPIA],    # copia oculta para ti
+        subject=asunto,
+        body=texto_plano,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[admin_correo],
+        bcc=[CORREO_COPIA],
     )
     mensaje.attach_alternative(html_body, 'text/html')
 
