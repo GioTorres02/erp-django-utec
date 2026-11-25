@@ -21,6 +21,16 @@ logger = logging.getLogger(__name__)
 CORREO_COPIA = 'jg.moyat.2528@cbtis198.edu.mx'
 
 
+def _bcc_para(destinatario: str) -> list:
+    """Devuelve la copia oculta solo si no es el mismo destinatario.
+
+    SendGrid rechaza el envío si una misma dirección aparece en to y bcc.
+    """
+    if destinatario.lower() == CORREO_COPIA.lower():
+        return []
+    return [CORREO_COPIA]
+
+
 @shared_task(
     bind=True,
     max_retries=3,
@@ -93,7 +103,7 @@ def enviar_confirmacion_pedido(self, pedido_id: int) -> dict:
         body=texto_plano,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[correo_destino],
-        bcc=[CORREO_COPIA],
+        bcc=_bcc_para(correo_destino),
     )
     mensaje.attach_alternative(html_body, 'text/html')
 
@@ -311,7 +321,7 @@ def _enviar_reporte_ventas(
         body=texto_plano,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[admin_correo],
-        bcc=[CORREO_COPIA],
+        bcc=_bcc_para(admin_correo),
     )
     mensaje.attach_alternative(html_body, 'text/html')
 
