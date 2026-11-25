@@ -65,6 +65,7 @@
             border-radius:6px; border:2px solid transparent; text-decoration:none; transition:background .15s,color .15s; }
         .erp-nav-link:hover { background:var(--clr-royal); color:var(--clr-ink) !important; border-color:var(--clr-ink); }
         .erp-nav-link.active { background:var(--clr-cream); color:var(--clr-royal) !important; border-color:var(--clr-royal); }
+        .erp-nav-btn { background:none; cursor:pointer; font-family:inherit; }
         .theme-toggle { background:var(--clr-royal); color:var(--clr-ink); border:2.5px solid var(--clr-ink);
             border-radius:50%; width:34px; height:34px; cursor:pointer; margin-left:.4rem; box-shadow:2px 2px 0 var(--clr-ink); }
         .theme-toggle:hover { transform:translate(1px,1px); box-shadow:1px 1px 0 var(--clr-ink); }
@@ -255,6 +256,15 @@
         <a href="{% url 'catalogo:carrito' %}" class="erp-nav-link {% block nav_carrito %}{% endblock %}">🛒{% if carrito_total_items %} ({{ carrito_total_items }}){% endif %}</a>
 
         <a href="/admin/" class="erp-nav-link">Admin</a>
+
+        {% if user.is_staff %}
+        <form method="post" action="{% url 'catalogo:enviar_reporte_manual' %}" style="display:inline;margin:0;"
+              onsubmit="return confirm('¿Enviar el reporte de ventas del día a tu correo?');">
+            {% csrf_token %}
+            <button type="submit" class="erp-nav-link erp-nav-btn" title="Enviar reporte de ventas del día">📊 Enviar reporte</button>
+        </form>
+        {% endif %}
+
         {% if user.is_authenticated %}
             <a href="/accounts/logout/" class="erp-nav-link">Salir ({{ user.username }})</a>
         {% else %}

@@ -20,6 +20,21 @@ Pedido en curso (W14, editado):
     Permite reutilizar el mismo pedido y el mismo PaymentIntent si el
     usuario hace doble clic o recarga la página de pago.
 """
+# Agregar al inicio de catalogo/views.py, junto a los demás imports:
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.http import require_POST
+
+from ventas.tasks import reporte_ventas_diario
+
+# Agregar al final de catalogo/views.py:
+@require_POST
+@staff_member_required
+def enviar_reporte_manual(request):
+    """Encola el reporte de ventas del día. Solo staff, solo POST."""
+    reporte_ventas_diario.delay()
+    messages.success(request, 'Reporte de ventas en camino a tu correo.')
+    return redirect('/admin/')
+
 from decimal import Decimal
 
 import stripe
