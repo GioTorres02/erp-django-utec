@@ -8,61 +8,84 @@
         /* CSS inline — mayor compatibilidad con clientes de correo */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 15px;
-            background: #F5F7FA;
-            color: #1A1A2E;
+            background: #2a1a10;
+            color: #3b2415;
         }
         .wrapper {
             max-width: 600px;
             margin: 24px auto;
-            background: #FFFFFF;
-            border-radius: 12px;
+            background: #f5e9cf;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 2px 16px rgba(10,35,66,.1);
         }
+        /* Franjas tipo estantería de discos */
+        .stripes {
+            display: table;
+            width: 100%;
+            height: 10px;
+        }
+        .stripes span { display: table-cell; height: 10px; }
         /* Encabezado */
         .header {
-            background: #0A2342;
+            background: #3b2415;
             padding: 28px 32px;
-            border-bottom: 4px solid #B8860B;
+            border-bottom: 4px solid #e8a33d;
+            text-align: center;
         }
         .header-title {
-            color: #D4AF37;
-            font-size: 22px;
+            color: #f5a524;
+            font-size: 28px;
             font-weight: bold;
-            letter-spacing: .03em;
+            text-shadow: 2px 2px 0 #1a0f08;
         }
         .header-sub {
-            color: rgba(255,255,255,.7);
+            font-family: 'Courier New', Courier, monospace;
+            color: #f5e9cf;
             font-size: 13px;
-            margin-top: 4px;
+            margin-top: 6px;
         }
         /* Cuerpo */
         .body { padding: 28px 32px; }
         .greeting {
             font-size: 17px;
             margin-bottom: 16px;
-            color: #0A2342;
+            color: #3b2415;
         }
         /* Caja del pedido */
         .pedido-box {
-            background: #E8F0FB;
-            border-left: 5px solid #0A2342;
-            border-radius: 0 8px 8px 0;
+            background: #ecdcb8;
+            border: 2px solid #3b2415;
+            border-left: 6px solid #e8a33d;
+            border-radius: 0 10px 10px 0;
             padding: 16px 20px;
             margin: 20px 0;
+        }
+        .pedido-label {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #7a5a40;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         .pedido-num {
             font-size: 20px;
             font-weight: bold;
-            color: #0A2342;
+            color: #3b2415;
+            margin-top: 2px;
         }
         .pedido-total {
             font-size: 18px;
             font-weight: bold;
-            color: #B8860B;
+            color: #b7791f;
             margin-top: 4px;
+        }
+        .pedido-fecha {
+            font-family: 'Courier New', Courier, monospace;
+            color: #7a5a40;
+            font-size: 12px;
+            margin-top: 6px;
         }
         /* Tabla de productos */
         .productos-table {
@@ -71,55 +94,71 @@
             margin: 20px 0;
         }
         .productos-table th {
-            background: #0A2342;
-            color: #FFFFFF;
+            background: #3b2415;
+            color: #f5e9cf;
             padding: 10px 14px;
-            font-size: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: .05em;
+            letter-spacing: 1px;
             text-align: left;
         }
         .productos-table th.num { text-align: right; }
         .productos-table td {
             padding: 9px 14px;
-            border-bottom: 1px solid #E8F0FB;
+            border-bottom: 1px solid #d9c9a3;
             font-size: 14px;
+            color: #3b2415;
         }
         .productos-table td.num { text-align: right; }
         .productos-table tr:last-child td { border-bottom: none; }
         .total-row td {
-            background: #FDF8E8;
-            border-top: 2px solid #B8860B;
+            background: #ecdcb8;
+            border-top: 2px solid #b7791f;
             font-weight: bold;
             font-size: 15px;
             padding: 12px 14px;
         }
-        .total-valor { color: #B8860B; text-align: right; }
+        .total-valor { color: #b7791f; text-align: right; }
         /* CTA */
         .cta-section { text-align: center; margin: 24px 0; }
         .cta-btn {
             display: inline-block;
-            background: #B8860B;
-            color: #FFFFFF;
+            background: #e8a33d;
+            color: #3b2415;
             padding: 12px 28px;
             border-radius: 8px;
+            border: 2px solid #3b2415;
             text-decoration: none;
             font-weight: bold;
             font-size: 15px;
         }
         /* Pie */
         .footer {
-            background: #F5F7FA;
-            border-top: 1px solid #C8D8EC;
+            background: #ecdcb8;
+            border-top: 1px dashed #b89a72;
             padding: 16px 32px;
-            font-size: 12px;
-            color: #5A6A7E;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #7a5a40;
             text-align: center;
         }
     </style>
 </head>
 <body>
 <div class="wrapper">
+
+    <!-- Franjas tipo estantería de discos -->
+    <div class="stripes">
+        <span style="background:#c0522a;"></span>
+        <span style="background:#d9c9a3;"></span>
+        <span style="background:#5f8a4a;"></span>
+        <span style="background:#c98aa6;"></span>
+        <span style="background:#2e4a6b;"></span>
+        <span style="background:#e0a52a;"></span>
+        <span style="background:#6b3f8f;"></span>
+        <span style="background:#3d3a44;"></span>
+    </div>
 
     <!-- ENCABEZADO -->
     <div class="header">
@@ -132,20 +171,17 @@
         <p class="greeting">
             Hola, <strong>{{ pedido.cliente.nombre }}</strong>:
         </p>
-        <p style="color:#5A6A7E;margin-bottom:16px;">
+        <p style="color:#7a5a40;margin-bottom:16px;">
             Gracias por tu compra. Tu pedido ha sido confirmado
             y está siendo procesado.
         </p>
 
         <!-- Número y total del pedido -->
         <div class="pedido-box">
-            <div class="pedido-num">
-                Pedido {{ pedido.numero_pedido }}
-            </div>
-            <div class="pedido-total">
-                Total pagado: ${{ pedido.total_pagado }}
-            </div>
-            <div style="color:#5A6A7E;font-size:13px;margin-top:6px;">
+            <div class="pedido-label">Número de pedido</div>
+            <div class="pedido-num">{{ pedido.numero_pedido }}</div>
+            <div class="pedido-total">Total pagado: ${{ pedido.total_pagado }}</div>
+            <div class="pedido-fecha">
                 Fecha: {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}
             </div>
         </div>
@@ -187,7 +223,7 @@
             </a>
         </div>
 
-        <p style="color:#5A6A7E;font-size:13px;margin-top:8px;">
+        <p style="color:#7a5a40;font-size:13px;margin-top:8px;">
             Si tienes preguntas, responde a este correo.<br>
             Equipo de {{ config.nombre_empresa }}
         </p>

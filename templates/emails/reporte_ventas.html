@@ -6,32 +6,41 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Georgia, 'Times New Roman', serif;
             font-size: 14px;
-            background: #F5F7FA;
-            color: #1A1A2E;
+            background: #2a1a10;
+            color: #3b2415;
         }
         .wrapper {
             max-width: 640px;
             margin: 24px auto;
-            background: #FFFFFF;
-            border-radius: 12px;
+            background: #f5e9cf;
+            border-radius: 14px;
             overflow: hidden;
         }
+        .stripes {
+            display: table;
+            width: 100%;
+            height: 10px;
+        }
+        .stripes span { display: table-cell; height: 10px; }
         .header {
-            background: #0A2342;
+            background: #3b2415;
             padding: 26px 32px;
-            border-bottom: 4px solid #B8860B;
+            border-bottom: 4px solid #e8a33d;
+            text-align: center;
         }
         .header-title {
-            color: #D4AF37;
-            font-size: 20px;
+            color: #f5a524;
+            font-size: 30px;
             font-weight: bold;
+            text-shadow: 2px 2px 0 #1a0f08;
         }
         .header-sub {
-            color: rgba(255,255,255,.72);
+            font-family: 'Courier New', Courier, monospace;
+            color: #f5e9cf;
             font-size: 13px;
-            margin-top: 4px;
+            margin-top: 6px;
         }
         .body { padding: 26px 32px; }
         /* KPI cards */
@@ -45,25 +54,27 @@
         .kpi-row { display: table-row; }
         .kpi-card {
             display: table-cell;
-            background: #E8F0FB;
-            border-radius: 8px;
+            background: #ecdcb8;
+            border: 2px solid #3b2415;
+            border-radius: 10px;
             padding: 14px 16px;
             text-align: center;
             width: 50%;
         }
         .kpi-valor {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
-            color: #0A2342;
+            color: #3b2415;
         }
         .kpi-label {
-            font-size: 12px;
-            color: #5A6A7E;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #7a5a40;
             text-transform: uppercase;
-            letter-spacing: .05em;
-            margin-top: 3px;
+            letter-spacing: 1px;
+            margin-top: 4px;
         }
-        .kpi-card.gold .kpi-valor { color: #B8860B; }
+        .kpi-card.gold .kpi-valor { color: #b7791f; }
         /* Tabla top productos */
         table {
             width: 100%;
@@ -71,49 +82,74 @@
             margin: 16px 0;
         }
         th {
-            background: #0A2342;
-            color: #FFFFFF;
+            background: #3b2415;
+            color: #f5e9cf;
             padding: 10px 14px;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: .05em;
+            letter-spacing: 1px;
             text-align: left;
         }
         th.num { text-align: right; }
         td {
             padding: 9px 14px;
-            border-bottom: 1px solid #E8F0FB;
+            border-bottom: 1px solid #d9c9a3;
             font-size: 13px;
+            color: #3b2415;
         }
         td.num { text-align: right; }
         .sin-ventas {
-            background: #FDF8E8;
-            border: 1px solid #B8860B;
-            border-radius: 8px;
+            background: #ecdcb8;
+            border: 1px solid #b7791f;
+            border-radius: 10px;
             padding: 16px;
             text-align: center;
-            color: #5A6A7E;
+            color: #7a5a40;
             font-size: 14px;
             margin: 16px 0;
         }
         .footer {
-            background: #F5F7FA;
-            border-top: 1px solid #C8D8EC;
+            background: #ecdcb8;
+            border-top: 1px dashed #b89a72;
             padding: 14px 32px;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 11px;
-            color: #5A6A7E;
+            color: #7a5a40;
             text-align: center;
+        }
+        .boton {
+            display: inline-block;
+            background: #e8a33d;
+            color: #3b2415;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 10px 22px;
+            border-radius: 8px;
+            border: 2px solid #3b2415;
         }
     </style>
 </head>
 <body>
 <div class="wrapper">
 
+    <!-- Franjas tipo estantería de discos -->
+    <div class="stripes">
+        <span style="background:#c0522a;"></span>
+        <span style="background:#d9c9a3;"></span>
+        <span style="background:#5f8a4a;"></span>
+        <span style="background:#c98aa6;"></span>
+        <span style="background:#2e4a6b;"></span>
+        <span style="background:#e0a52a;"></span>
+        <span style="background:#6b3f8f;"></span>
+        <span style="background:#3d3a44;"></span>
+    </div>
+
     <!-- ENCABEZADO -->
     <div class="header">
-        <div class="header-title">📊 Reporte de ventas del día</div>
+        <div class="header-title">{{ config.nombre_empresa }}</div>
         <div class="header-sub">
-            {{ config.nombre_empresa }} · {{ fecha }}
+            📊 Reporte de ventas del día · {{ fecha }}
         </div>
     </div>
 
@@ -135,7 +171,7 @@
         </div>
 
         {% if top_productos %}
-        <p style="font-weight:600;color:#0A2342;margin-bottom:8px;">
+        <p style="font-weight:bold;color:#3b2415;margin-bottom:8px;">
             Top {{ top_productos|length }} productos del día
         </p>
         <table>
@@ -164,17 +200,13 @@
         </div>
         {% endif %}
 
-        <p style="color:#5A6A7E;font-size:12px;margin-top:12px;">
-            Panel de administración:
-            <a href="{{ url_admin }}" style="color:#0A2342;">
-                {{ url_admin }}
-            </a>
+        <p style="text-align:center;margin-top:20px;">
+            <a class="boton" href="{{ url_admin }}">Ir al panel de administración</a>
         </p>
     </div>
 
     <div class="footer">
-        <p>Generado automáticamente por ERP Django a las 8:00 AM</p>
-        <p>{{ config.nombre_empresa }}</p>
+        <p>Generado automáticamente por ERP Django · {{ config.nombre_empresa }} · Espiral 1 W02</p>
     </div>
 
 </div>
